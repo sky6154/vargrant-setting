@@ -32,7 +32,6 @@ Vagrant.configure("2") do |config|
 #	end
 
 
-
 # 그냥 하기
 	config.vm.define "node_1" do |node1|
 		node1.vm.box = "ubuntu/focal64"
