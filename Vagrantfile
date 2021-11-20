@@ -35,7 +35,7 @@ Vagrant.configure("2") do |config|
 # 그냥 하기
 	config.vm.define "node_1" do |node1|
 		node1.vm.box = "ubuntu/focal64"
-		node1.vm.host_name = "node_1"
+		node1.vm.host_name = "node1"
 		node1.vm.provider :virtualbox do |vb|
 			vb.cpus = 2
 			vb.memory = 4096
@@ -52,7 +52,7 @@ Vagrant.configure("2") do |config|
 
 	config.vm.define "node_2" do |node2|
                 node2.vm.box = "ubuntu/focal64"
-                node2.vm.host_name = "node_2"
+                node2.vm.host_name = "node2"
                 node2.vm.provider :virtualbox do |vb|
                         vb.cpus = 2
                         vb.memory = 4096
@@ -69,7 +69,7 @@ Vagrant.configure("2") do |config|
 
 	config.vm.define "node_3" do |node3|
                 node3.vm.box = "ubuntu/focal64"
-                node3.vm.host_name = "node_3"
+                node3.vm.host_name = "node3"
                 node3.vm.provider :virtualbox do |vb|
                         vb.cpus = 2
                         vb.memory = 4096
@@ -86,7 +86,7 @@ Vagrant.configure("2") do |config|
 
 	config.vm.define "node_4" do |node4|
                 node4.vm.box = "ubuntu/focal64"
-                node4.vm.host_name = "node_4"
+                node4.vm.host_name = "node4"
                 node4.vm.provider :virtualbox do |vb|
                         vb.cpus = 2
                         vb.memory = 4096
@@ -107,7 +107,7 @@ Vagrant.configure("2") do |config|
 
 	config.vm.define "personal_1" do |p1|
                 p1.vm.box = "ubuntu/focal64"
-                p1.vm.host_name = "personal_1"
+                p1.vm.host_name = "personal1"
                 p1.vm.provider :virtualbox do |vb|
                         vb.cpus = 4
                         vb.memory = 16384 # 16G
