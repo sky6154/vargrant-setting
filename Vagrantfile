@@ -47,7 +47,7 @@ Vagrant.configure("2") do |config|
 			vb.customize ['storageattach', :id, '--storagectl', 'IDE Controller', '--port', 0, '--device', 1, '--type', 'hdd', '--medium', NODE_1_DISK]
 		end
 
-		node1.vm.network "private_netrowk", ip: "192.168.50.1"
+		node1.vm.network "private_network", ip: "192.168.50.1"
 	end
 
 	config.vm.define "node_2" do |node2|
@@ -64,7 +64,7 @@ Vagrant.configure("2") do |config|
                         vb.customize ['storageattach', :id, '--storagectl', 'IDE Controller', '--port', 0, '--device', 1, '--type', 'hdd', '--medium', NODE_2_DISK]
 		end
 
-		node2.vm.network "private_netrowk", ip: "192.168.50.2"
+		node2.vm.network "private_network", ip: "192.168.50.2"
         end
 
 	config.vm.define "node_3" do |node3|
@@ -81,7 +81,7 @@ Vagrant.configure("2") do |config|
                         vb.customize ['storageattach', :id, '--storagectl', 'IDE Controller', '--port', 0, '--device', 1, '--type', 'hdd', '--medium', NODE_3_DISK]
 		end
 
-		node3.vm.network "private_netrowk", ip: "192.168.50.3"
+		node3.vm.network "private_network", ip: "192.168.50.3"
         end
 
 	config.vm.define "node_4" do |node4|
@@ -92,13 +92,17 @@ Vagrant.configure("2") do |config|
                         vb.memory = 4096
 			vb.gui = false
 
-			unless File.exist?(NODE_4_DISK)
-                                vb.customize ['createhd', '--filename', NODE_4_DISK, '--format', 'VDI', '--size', 900 * 1024] # 900G
-                        end
-                        vb.customize ['storageattach', :id, '--storagectl', 'IDE Controller', '--port', 0, '--device', 1, '--type', 'hdd', '--medium', NODE_4_DISK]
+			#unless File.exist?(NODE_4_DISK)
+                        #        vb.customize ['createhd', '--filename', NODE_4_DISK, '--format', 'VDI', '--size', 900 * 1024] # 900G
+                        #end
+                        #vb.customize ['storageattach', :id, '--storagectl', 'IDE Controller', '--port', 0, '--device', 1, '--type', 'hdd', '--medium', NODE_4_DISK]
 		end
 
-		node4.vm.network "private_netrowk", ip: "192.168.50.4"
+		# for PVC
+		node4.vm.synced_folder "/apple_hdd/synced", "/synced",
+			owner: "k8s", group: "k8s"
+
+		node4.vm.network "private_network", ip: "192.168.50.4"
         end
 
 	config.vm.define "personal_1" do |p1|
@@ -109,11 +113,15 @@ Vagrant.configure("2") do |config|
                         vb.memory = 16384 # 16G
 			vb.gui = false
 
-		unless File.exist?(PERSONAL_1_DISK)
-                                vb.customize ['createhd', '--filename', PERSONAL_1_DISK, '--format', 'VDI', '--size', 3.7 * 1024 * 1024] # 3.7T
-                        end
-                        vb.customize ['storageattach', :id, '--storagectl', 'IDE Controller', '--port', 0, '--device', 1, '--type', 'hdd', '--medium', PERSONAL_1_DISK]
+		#	unless File.exist?(PERSONAL_1_DISK)
+                #                vb.customize ['createhd', '--filename', PERSONAL_1_DISK, '--format', 'VDI', '--size', 3.7 * 1024 * 1024] # 3.7T
+                #       end
+                #       vb.customize ['storageattach', :id, '--storagectl', 'IDE Controller', '--port', 0, '--device', 1, '--type', 'hdd', '--medium', PERSONAL_1_DISK]
+
 		end
+
+		p1.vm.synced_folder "/media/synced", "/synced",
+			owner: "vagrant", group: "vagrant"
 
 		p1.vm.network "public_network"
         end
