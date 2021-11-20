@@ -8,7 +8,6 @@
 
 ENV["LC_ALL"] = "ko_KR.UTF-8"
 
-
 NODE_1_DISK = "/apple_hdd/node_1_hdd.vdi"
 NODE_2_DISK = "/apple_hdd/node_2_hdd.vdi"
 NODE_3_DISK = "/apple_hdd/node_3_hdd.vdi"
