@@ -14,7 +14,7 @@ NODE_2_DISK = "/apple_hdd/node_2_hdd.vdi"
 NODE_3_DISK = "/apple_hdd/node_3_hdd.vdi"
 NODE_4_DISK = "/apple_hdd/node_4_hdd.vdi"
 
-PERSONAL_1_DISK = "/media/personal_1_hdd.vdi""
+PERSONAL_1_DISK = "/media/personal_1_hdd.vdi"
 
 Vagrant.configure("2") do |config|
   # The most common configuration options are documented and commented below.
