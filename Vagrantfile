@@ -64,7 +64,7 @@ Vagrant.configure("2") do |config|
 			vb.gui = false
 
 			unless File.exist?(NODE_2_DISK)
-                                vb.customize ['createhd', '--filename', NODE_2_DISK, '--size', 10 * 1024, '--variant', 'Standard'] # 10G
+                                vb.customize ['createmedium', '--filename', NODE_2_DISK, '--size', 10 * 1024, '--variant', 'Standard'] # 10G
                         end
                         vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', NODE_2_DISK]
 		end
@@ -83,9 +83,9 @@ Vagrant.configure("2") do |config|
 			vb.gui = false
 
 			unless File.exist?(NODE_3_DISK)
-                                vb.customize ['createhd', '--filename', NODE_3_DISK, '--size', 10 * 1024, '--variant', 'Standard'] # 10G
+                                vb.customize ['createmedium', '--filename', NODE_3_DISK, '--size', 10 * 1024, '--variant', 'Standard'] # 10G
                         end
-                        vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 0, '--device', 0, '--type', 'hdd', '--medium', NODE_3_DISK]
+                        vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', NODE_3_DISK]
 		end
 
         end
