@@ -37,7 +37,8 @@ Vagrant.configure("2") do |config|
 		node1.vm.box = "centos/7"
 		node1.vm.host_name = "node1"
 
-		node1.vm.network "private_network", ip: "192.168.50.11"
+		node1.vm.network :private_network, ip: "192.168.50.11"
+		node1.vm.network :forwarded_port, guest: 22, host: 2201, id: "ssh", auto_correct: false
 
 		node1.vm.provider :virtualbox do |vb|
 			vb.cpus = 2
@@ -50,13 +51,16 @@ Vagrant.configure("2") do |config|
 			vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', NODE_1_DISK]
 		end
 
+		node1.vbguest.installer_options = { allow_kernel_upgrade: true }
+
 	end
 
 	config.vm.define "node_2" do |node2|
                 node2.vm.box = "centos/7"
                 node2.vm.host_name = "node2"
 
-		node2.vm.network "private_network", ip: "192.168.50.12"
+		node2.vm.network :private_network, ip: "192.168.50.12"
+		node2.vm.network :forwarded_port, guest: 22, host: 2202, id: "ssh", auto_correct: false
 
                 node2.vm.provider :virtualbox do |vb|
                         vb.cpus = 2
@@ -69,13 +73,16 @@ Vagrant.configure("2") do |config|
                         vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', NODE_2_DISK]
 		end
 
+		node2.vbguest.installer_options = { allow_kernel_upgrade: true }
+
         end
 
 	config.vm.define "node_3" do |node3|
                 node3.vm.box = "centos/7"
                 node3.vm.host_name = "node3"
 
-		node3.vm.network "private_network", ip: "192.168.50.13"
+		node3.vm.network :private_network, ip: "192.168.50.13"
+		node3.vm.network :forwarded_port, guest: 22, host: 2203, id: "ssh", auto_correct: false
 
                 node3.vm.provider :virtualbox do |vb|
                         vb.cpus = 2
@@ -88,13 +95,16 @@ Vagrant.configure("2") do |config|
                         vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', NODE_3_DISK]
 		end
 
+		node3.vbguest.installer_options = { allow_kernel_upgrade: true }
+
         end
 
 	config.vm.define "node_4" do |node4|
                 node4.vm.box = "centos/7"
                 node4.vm.host_name = "node4"
 
-		node4.vm.network "private_network", ip: "192.168.50.14"
+		node4.vm.network :private_network, ip: "192.168.50.14"
+		node4.vm.network :forwarded_port, guest: 22, host: 2204, id: "ssh", auto_correct: false
 
                 node4.vm.provider :virtualbox do |vb|
                         vb.cpus = 2
@@ -103,15 +113,18 @@ Vagrant.configure("2") do |config|
 		end
 
 		# for PVC
-		node4.vm.synced_folder "/apple_hdd/synced", "/synced",
-			owner: "k8s", group: "k8s"
+		node4.vm.synced_folder "/apple_hdd/synced", "/synced"
+		#	, owner: "k8s", group: "k8s"
+		
+		node4.vbguest.installer_options = { allow_kernel_upgrade: true }
         end
 
 	config.vm.define "personal_1" do |p1|
                 p1.vm.box = "ubuntu/focal64"
                 p1.vm.host_name = "personal1"
 
-		p1.vm.network "public_network"
+		p1.vm.network :public_network
+		p1.vm.network :forwarded_port, guest: 22, host: 2301, id: "ssh", auto_correct: false
 
                 p1.vm.provider :virtualbox do |vb|
                         vb.cpus = 4
@@ -119,8 +132,11 @@ Vagrant.configure("2") do |config|
 			vb.gui = false
 		end
 
-		p1.vm.synced_folder "/media/synced", "/synced",
-			owner: "vagrant", group: "vagrant"
+		p1.vm.synced_folder "/media/synced", "/synced"
+		#	, owner: "vagrant", group: "vagrant"
+		
+		p1.vbguest.installer_options = { allow_kernel_upgrade: true }
+
         end
 
 
