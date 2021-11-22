@@ -52,7 +52,8 @@ Vagrant.configure("2") do |config|
 		end
 
 		node1.vbguest.installer_options = { allow_kernel_upgrade: true }
-
+		
+		node1.vm.provision "shell", path: "./install_k8s.sh"
 	end
 
 	config.vm.define "node_2" do |node2|
@@ -75,6 +76,7 @@ Vagrant.configure("2") do |config|
 
 		node2.vbguest.installer_options = { allow_kernel_upgrade: true }
 
+		node2.vm.provision "shell", path: "./install_k8s.sh"
         end
 
 	config.vm.define "node_3" do |node3|
@@ -97,6 +99,7 @@ Vagrant.configure("2") do |config|
 
 		node3.vbguest.installer_options = { allow_kernel_upgrade: true }
 
+		node3.vm.provision "shell", path: "./install_k8s.sh"
         end
 
 	config.vm.define "node_4" do |node4|
@@ -117,6 +120,8 @@ Vagrant.configure("2") do |config|
 		#	, owner: "k8s", group: "k8s"
 		
 		node4.vbguest.installer_options = { allow_kernel_upgrade: true }
+
+		node4.vm.provision "shell", path: "./install_k8s.sh"
         end
 
 	config.vm.define "personal_1" do |p1|
