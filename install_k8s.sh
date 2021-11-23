@@ -41,6 +41,8 @@ sudo yum update -y && yum install -y containerd.io
 sudo mkdir -p /etc/containerd
 sudo containerd config default > /etc/containerd/config.toml
 
+sudo systemctl restart containerd
+
 
 # install kubernetes
 sudo tee /etc/yum.repos.d/kubernetes.repo<<EOF
