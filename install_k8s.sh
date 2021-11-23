@@ -3,6 +3,9 @@
 # update
 sudo yum -y update
 
+# install utils
+sudo yum -y install net-tools
+
 # install packages
 sudo yum -y install epel-release vim git curl wget kubelet kubeadm kubectl --disableexcludes=kubernetes
 
