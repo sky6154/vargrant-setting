@@ -3,25 +3,25 @@
           name: "{{ packages }}"
           state: present
           update_cache: yes
-          vars:
-                  packages:
-                          - yum-utils
-                          - curl
-                          - net-tools
-                          - epel-release
-                          - vim
-                          - git
-                          - wget
+  vars:
+          packages:
+                  - yum-utils
+                  - curl
+                  - net-tools
+                  - epel-release
+                  - vim
+                  - git
+                  - wget
 
 - name: Install containerd dependencies 
   yum:
           name: "{{ packages }}"
           state: latest
           update_cache: yes
-          vars:
-                  packages:
-                          - device-mapper-persistent-data
-                          - lvm2
+  vars:
+          packages:
+                  - device-mapper-persistent-data
+                  - lvm2
 
 - name: Add Docker repo
   get_url:
@@ -39,8 +39,8 @@
   file:
           path: "{{ item }}"
           state: directory
-          with_items:
-                  - /etc/containerd
+  with_items:
+          - /etc/containerd
 
 - name: Configure containerd
   command: sudo containerd config default > /etc/containerd/config.toml
@@ -78,10 +78,10 @@
         sysctl_set: yes
         reload: yes
         ignore_errors: true
-        with_items:
-                - {key: net.bridge.bridge-nf-call-ip6tables, value: 1}
-                - {key: net.bridge.bridge-nf-call-iptables,  value: 1}
-                - {key: net.ipv4.ip_forward,  value: 1}
+  with_items:
+          - {key: net.bridge.bridge-nf-call-ip6tables, value: 1}
+          - {key: net.bridge.bridge-nf-call-iptables,  value: 1}
+          - {key: net.ipv4.ip_forward,  value: 1}
 
 
 - name: Add kubernetes repository

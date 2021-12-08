@@ -3,7 +3,7 @@
   become: true
   tasks:
         - name: Execute pre-setting
-          import_tasks: preset.yml
+          include_tasks: preset.yml
 
         - name: Copy the join command to server location
           copy: src=join-command dest=/tmp/join-command.sh mode=0777
