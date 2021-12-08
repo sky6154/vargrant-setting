@@ -1,0 +1,27 @@
+---
+- hosts: all
+  become: true
+  tasks:
+        - name: Execute pre-setting
+          import_tasks: preset.yml
+
+        - name: Initialize kubernetes cluster
+          command: kubeadm init --apiserver-advertise-address=192.168.50.10 --apiserver-cert-extra-sans=192.168.50.10  --node-name k8s-master --pod-network-cidr=192.168.50.0/24
+
+        - name: Install calico pod network
+          become: false
+          command: kubectl apply -f calico.yaml
+
+        - name: Copy admin.conf to remote
+          copy:
+                  src: /etc/kubernetes/admin.conf
+                  dest: /home/ko/.kube/config
+                  remote_src: yes
+
+        - name: Generate cluster join command
+          command: kubeadm token create --print-join-command
+          register: join_command
+
+        - name: Copy join command to local file
+          local_action: copy content="{{ join_command.stdout_lines[0] }}" dest="./join-command"
+

@@ -1,0 +1,108 @@
+- name: Install packages
+  yum:
+          name: "{{ packages }}"
+          state: present
+          update_cache: yes
+          vars:
+                  packages:
+                          - yum-utils
+                          - curl
+                          - net-tools
+                          - epel-release
+                          - vim
+                          - git
+                          - wget
+
+- name: Install containerd dependencies 
+  yum:
+          name: "{{ packages }}"
+          state: latest
+          update_cache: yes
+          vars:
+                  packages:
+                          - device-mapper-persistent-data
+                          - lvm2
+
+- name: Add Docker repo
+  get_url:
+          url: https://download.docker.com/linux/centos/docker-ce.repo
+          dest: /etc/yum.repos.d/docer-ce.repo
+          become: yes
+
+- name: Install containerd
+  yum:
+          name: containerd.io
+          state: present
+          update_cache: yes
+
+- name: Create containerd directories
+  file:
+          path: "{{ item }}"
+          state: directory
+          with_items:
+                  - /etc/containerd
+
+- name: Configure containerd
+  command: sudo containerd config default > /etc/containerd/config.toml
+  run_once: true
+
+- name: Start and enable containerd service
+  systemd:
+          name: containerd
+          state: restarted
+          enabled: yes
+          daemon_reload: yes
+
+- name: Disable SELinux
+  command: "{{ item }}"
+  with_items: 
+        - sudo setenforce 0
+        - sudo sed -i 's/^SELINUX=.*/SELINUX=permissive/g' /etc/selinux/config
+
+- name: Disable swap
+  command: "{{ item }}"
+  with_items:
+        - sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+        - sudo swapoff -a
+
+# 열꺼면 https://kubernetes.io/docs/reference/ports-and-protocols/ 참고
+- name: Disable firewall
+  command: sudo systemctl disable --now firewalld
+
+
+- name: Make iptables watch bridge traffic
+  sysctl:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        state: present
+        sysctl_set: yes
+        reload: yes
+        ignore_errors: true
+        with_items:
+                - {key: net.bridge.bridge-nf-call-ip6tables, value: 1}
+                - {key: net.bridge.bridge-nf-call-iptables,  value: 1}
+                - {key: net.ipv4.ip_forward,  value: 1}
+
+
+- name: Add kubernetes repository
+  template:
+          src: "k8s.repo"
+          dest: /etc/yum.repos.d/kubernetes.repo
+
+- name: Install kubernetes packages
+  yum:
+          name: [kubelet, kubeadm, kubectl]
+          disable_excludes: kubernetes
+
+# vagrantfile 에서 전달받은 ip
+- name: Configure node ip
+  lineinfile:
+          path: /etc/default/kubelet
+          line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}
+
+- name: Enable kubelet service
+  service:
+          name: kubelet
+          enabled: yes
+
+

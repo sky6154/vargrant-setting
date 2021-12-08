@@ -8,123 +8,120 @@
 
 ENV["LC_ALL"] = "en_US.UTF-8"
 
-NODE_1_DISK = "/apple_hdd/hdds/node_1_hdd.vdi"
-NODE_2_DISK = "/apple_hdd/hdds/node_2_hdd.vdi"
-NODE_3_DISK = "/apple_hdd/hdds/node_3_hdd.vdi"
-NODE_4_DISK = "/apple_hdd/hdds/node_4_hdd.vdi"
+VOLUME_FOLDER = "/apple_hdd/hdds/"
+MASTER_DISK = VOLUME_FOLDER + "master_hdd.vdi"
 
 PERSONAL_1_DISK = "/media/vms/personal_1_hdd.vdi"
 
-Vagrant.configure("2") do |config|
+NUM_OF_NODE = 2
+NUM_OF_PVC_NODE = 1
+OS_IMAGE = "centos/7"
+
+VAGRANTFILE_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_VERSION) do |config|
   # The most common configuration options are documented and commented below.
   # For a complete reference, please see the online documentation at
   # https://docs.vagrantup.com.
 
+	config.vm.define "master" do |master|
+		master.vm.box = OS_IMAGE
+		master.vm.host_name = "msater"
 
-# 루프 돌지 않고 하기
-#	(1..4).each do |i|
-#		config.vm.define "node=#{i}" do |node|
-#			node.vm.provision "shell",
-#				inline: "echo hello from node #{i}"
-#
-#			node.vm.network "private_network", ip: "192.168.50.#{i}"
-#		end
-#	end
+		master.vm.network :private_network, ip: "192.168.50.10", netmask: "255.255.255.0"
+		master.vm.network :forwarded_port, guest: 22, host: 2200, id: "ssh", auto_correct: false
 
-
-# 그냥 하기
-	config.vm.define "node_1" do |node1|
-		node1.vm.box = "centos/7"
-		node1.vm.host_name = "node1"
-
-		node1.vm.network :private_network, ip: "192.168.50.11"
-		node1.vm.network :forwarded_port, guest: 22, host: 2201, id: "ssh", auto_correct: false
-
-		node1.vm.provider :virtualbox do |vb|
+		master.vm.provider :virtualbox do |vb|
 			vb.cpus = 2
 			vb.memory = 4096
 			vb.gui = false
 
-			if !File.exist?(NODE_1_DISK)
-				vb.customize ['createmedium', '--filename', NODE_1_DISK, '--size', 10 * 1024, '--variant', 'Standard'] # 10G
+			if !File.exist?(MASTER_DISK)
+				vb.customize ['createmedium', '--filename', MASTER_DISK, '--size', 10 * 1024, '--variant', 'Standard'] # 10G
 			end
-			vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', NODE_1_DISK]
+			vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', MASTER_DISK]
 		end
 
-		node1.vbguest.installer_options = { allow_kernel_upgrade: true }
+		master.vbguest.installer_options = { allow_kernel_upgrade: true }
+
+		master.vm.provision :ansible do |ansible|
+			ansible.playbook = "k8s-setup/master.yml"
+			ansible.extra_vars = {
+				node_ip: "192.168.50.10"
+			}
+		end
 		
-		node1.vm.provision "shell", path: "./install_k8s.sh"
 	end
 
-	config.vm.define "node_2" do |node2|
-                node2.vm.box = "centos/7"
-                node2.vm.host_name = "node2"
 
-		node2.vm.network :private_network, ip: "192.168.50.12"
-		node2.vm.network :forwarded_port, guest: 22, host: 2202, id: "ssh", auto_correct: false
 
-                node2.vm.provider :virtualbox do |vb|
-                        vb.cpus = 2
-                        vb.memory = 4096
-			vb.gui = false
+	# normal node
+	(1..NUM_OF_NODE).each do |i|
 
-			unless File.exist?(NODE_2_DISK)
-                                vb.customize ['createmedium', '--filename', NODE_2_DISK, '--size', 10 * 1024, '--variant', 'Standard'] # 10G
+		node_disk = VOLUME_FOLDER + "node_#{i}_hdd.vdi"
+
+		config.vm.define "node-#{i}" do |node|
+			node.vm.box = OS_IMAGE
+			node.vm.hostname = "node#{i}"
+
+			node.vm.network :private_network, ip: "192.168.50.#{i + 10}", netmask: "255.255.255.0"
+			ssh_port = 2200 + i
+			node.vm.network :forwarded_port, guest: 22, host: ssh_port, id: "ssh", auto_correct: false			
+
+			node.vm.provider :virtualbox do |vb|
+                        	vb.cpus = 2
+                        	vb.memory = 4096
+                        	vb.gui = false
+
+                       		if !File.exist?( node_disk )
+                                	vb.customize ['createmedium', '--filename', node_disk, '--size', 10 * 1024, '--variant', 'Standard'] # 10G
+                        	end
+
+                        	vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', node_disk]
+                	end
+
+			node.vbguest.installer_options = { allow_kernel_upgrade: true }
+
+			node.vm.provision :ansible do |ansible|
+				ansible.playbook = "k8s-setup/node.yml"
+				ansible.extra_vars = {
+					node_ip: "192.168.50.#{i + 10}"
+				}
+
+			end
+		end
+	end
+
+
+
+	# PVC node
+	(1..NUM_OF_PVC_NODE).each do |i|
+		config.vm.define "node-pvc-#{i}" do |node|
+			node.vm.box = OS_IMAGE
+			node.vm.hostname = "pvc_node#{i}"
+                        node.vm.network :private_network, ip: "192.168.50.#{i + 100}", netmask: "255.255.255.0"
+			node.vm.network :forwarded_port, guest: 22, host: 2301, id: "ssh", auto_correct: false			
+
+                        node.vm.provider :virtualbox do |vb|
+                                vb.cpus = 2
+                                vb.memory = 4096
+                                vb.gui = false
                         end
-                        vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', NODE_2_DISK]
-		end
 
-		node2.vbguest.installer_options = { allow_kernel_upgrade: true }
+			node.vm.synced_folder "/apple_hdd/synced", "/synced"
+                	node.vbguest.installer_options = { allow_kernel_upgrade: true }
 
-		node2.vm.provision "shell", path: "./install_k8s.sh"
-        end
-
-	config.vm.define "node_3" do |node3|
-                node3.vm.box = "centos/7"
-                node3.vm.host_name = "node3"
-
-		node3.vm.network :private_network, ip: "192.168.50.13"
-		node3.vm.network :forwarded_port, guest: 22, host: 2203, id: "ssh", auto_correct: false
-
-                node3.vm.provider :virtualbox do |vb|
-                        vb.cpus = 2
-                        vb.memory = 4096
-			vb.gui = false
-
-			unless File.exist?(NODE_3_DISK)
-                                vb.customize ['createmedium', '--filename', NODE_3_DISK, '--size', 10 * 1024, '--variant', 'Standard'] # 10G
+                        node.vm.provision :ansible do |ansible|
+                                ansible.playbook = "k8s-setup/node.yml"
+                                ansible.extra_vars = {
+                                        node_ip: "192.168.50.#{i + 100}"
+                                }
                         end
-                        vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', NODE_3_DISK]
-		end
-
-		node3.vbguest.installer_options = { allow_kernel_upgrade: true }
-
-		node3.vm.provision "shell", path: "./install_k8s.sh"
+                end
         end
 
-	config.vm.define "node_4" do |node4|
-                node4.vm.box = "centos/7"
-                node4.vm.host_name = "node4"
 
-		node4.vm.network :private_network, ip: "192.168.50.14"
-		node4.vm.network :forwarded_port, guest: 22, host: 2204, id: "ssh", auto_correct: false
-
-                node4.vm.provider :virtualbox do |vb|
-                        vb.cpus = 2
-                        vb.memory = 4096
-			vb.gui = false
-		end
-
-		# for PVC
-		node4.vm.synced_folder "/apple_hdd/synced", "/synced"
-		#	, owner: "k8s", group: "k8s"
-		
-		node4.vbguest.installer_options = { allow_kernel_upgrade: true }
-
-		node4.vm.provision "shell", path: "./install_k8s.sh"
-        end
-
-	config.vm.define "personal_1" do |p1|
+	config.vm.define "personal1" do |p1|
                 p1.vm.box = "ubuntu/focal64"
                 p1.vm.host_name = "personal1"
 
