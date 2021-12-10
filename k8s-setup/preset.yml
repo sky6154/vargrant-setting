@@ -1,3 +1,8 @@
+- name: Add vagrant user to root group(for containerd)
+  user:
+          name: vagrant
+          group: root
+
 - name: Install packages
   yum:
           name: "{{ packages }}"
@@ -31,8 +36,35 @@
 - name: Install containerd
   yum:
           name: containerd.io
-          state: present
+          state: latest
           update_cache: yes
+
+- name: Load module in containerd
+  shell:
+          cmd: |
+                cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
+                        overlay
+                        br_netfilter
+                        EOF
+
+- name: Apply module
+  command: "{{ item }}"
+  with_items:
+          - sudo modprobe overlay
+          - sudo modprobe br_netfilter
+
+- name: Make iptables watch bridge traffic
+  sysctl:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        state: present
+        sysctl_set: yes
+        reload: yes
+        ignoreerrors: true
+  with_items:
+          - {key: net.bridge.bridge-nf-call-ip6tables, value: 1}
+          - {key: net.bridge.bridge-nf-call-iptables,  value: 1}
+          - {key: net.ipv4.ip_forward,  value: 1}
 
 - name: Create containerd directories
   file:
@@ -41,9 +73,15 @@
   with_items:
           - /etc/containerd
 
-- name: Configure containerd
-  command: sudo containerd config default > /etc/containerd/config.toml
-  run_once: true
+#- name: Configure containerd
+#  command: containerd config default > /etc/containerd/config.toml
+#  run_once: true
+
+- name: Copy containrd config to remote
+  copy:
+        src: config.toml
+        dest: /etc/containerd
+        remote_src: no
 
 - name: Start and enable containerd service
   systemd:
@@ -51,6 +89,9 @@
           state: restarted
           enabled: yes
           daemon_reload: yes
+
+#- name: Change containerd.sock permission
+#  command: sudo chown root:vagrant /run/containerd/containerd.sock
 
 - name: Disable SELinux
   command: "{{ item }}"
@@ -68,21 +109,6 @@
 - name: Disable firewall
   command: sudo systemctl disable --now firewalld
 
-
-- name: Make iptables watch bridge traffic
-  sysctl:
-        name: "{{ item.key }}"
-        value: "{{ item.value }}"
-        state: present
-        sysctl_set: yes
-        reload: yes
-        ignoreerrors: true
-  with_items:
-          - {key: net.bridge.bridge-nf-call-ip6tables, value: 1}
-          - {key: net.bridge.bridge-nf-call-iptables,  value: 1}
-          - {key: net.ipv4.ip_forward,  value: 1}
-
-
 - name: Add kubernetes repository
   template:
           src: "k8s.repo"
@@ -96,8 +122,8 @@
 # vagrantfile 에서 전달받은 ip
 - name: Configure node ip
   lineinfile:
-          path: /etc/default/kubelet
-          line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}
+          path: /etc/sysconfig/kubelet
+          line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }} --image-service-endpoint=unix:///run/containerd/containerd.sock  --cgroup-driver=systemd
 
 - name: Enable kubelet service
   service:

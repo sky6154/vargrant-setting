@@ -1,6 +1,7 @@
 ---
 - hosts: all
   become: true
+  remote_user: vagrant
   tasks:
         - name: Execute pre-setting
           include_tasks: preset.yml

@@ -26,7 +26,7 @@ Vagrant.configure(VAGRANTFILE_VERSION) do |config|
 
 	config.vm.define "master" do |master|
 		master.vm.box = OS_IMAGE
-		master.vm.host_name = "msater"
+		master.vm.host_name = "master"
 
 		master.vm.network :private_network, ip: "192.168.50.10", netmask: "255.255.255.0"
 		master.vm.network :forwarded_port, guest: 22, host: 2200, id: "ssh", auto_correct: false

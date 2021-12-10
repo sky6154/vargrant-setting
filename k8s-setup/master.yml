@@ -1,27 +1,32 @@
 ---
 - hosts: all
   become: true
+  remote_user: vagrant
   tasks:
         - name: Execute pre-setting
           include_tasks: preset.yml
 
         - name: Initialize kubernetes cluster
-          command: kubeadm init --apiserver-advertise-address=192.168.50.10 --apiserver-cert-extra-sans=192.168.50.10  --node-name k8s-master --pod-network-cidr=192.168.50.0/24
+          command: sudo kubeadm init --apiserver-advertise-address=192.168.50.10 --apiserver-cert-extra-sans=192.168.50.10  --node-name master --pod-network-cidr=192.168.50.0/24
+
+        - name: Copy admin.conf to local
+          fetch:
+                  src: /etc/kubernetes/admin.conf
+                  dest: /home/ko/.kube/config
+                  flat: yes
 
         - name: Install calico pod network
           become: false
-          command: kubectl apply -f calico.yaml
-
-        - name: Copy admin.conf to remote
-          copy:
-                  src: /etc/kubernetes/admin.conf
-                  dest: /home/ko/.kube/config
-                  remote_src: yes
+          local_action: ansible.builtin.command kubectl apply -f calico.yaml
 
         - name: Generate cluster join command
-          command: kubeadm token create --print-join-command
+          command: sudo kubeadm token create --print-join-command
           register: join_command
 
+        - debug:
+                var: join_command
+
         - name: Copy join command to local file
-          local_action: copy content="{{ join_command.stdout_lines[0] }}" dest="./join-command"
+          become: false
+          local_action: copy content={{ join_command.stdout_lines[0] }} dest=./join-command
 

@@ -1,5 +1,7 @@
 # for vagrant
 .vagrant/
 
+k8s-setup/join-command
+
 # log
 *.log
