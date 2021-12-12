@@ -23,12 +23,15 @@ Vagrant.configure(VAGRANTFILE_VERSION) do |config|
   # The most common configuration options are documented and commented below.
   # For a complete reference, please see the online documentation at
   # https://docs.vagrantup.com.
+ 
+	# vagrant가 모든 vm에 mac addr을 같게 하는 이슈 
+	config.vm.base_mac = nil
 
 	config.vm.define "master" do |master|
 		master.vm.box = OS_IMAGE
 		master.vm.host_name = "master"
 
-		master.vm.network :private_network, ip: "192.168.50.10", netmask: "255.255.255.0"
+		master.vm.network :private_network, ip: "192.168.50.10", netmask: "255.255.255.0", name: "vboxnet0"
 		master.vm.network :forwarded_port, guest: 22, host: 2200, id: "ssh", auto_correct: false
 
 		master.vm.provider :virtualbox do |vb|
@@ -60,11 +63,11 @@ Vagrant.configure(VAGRANTFILE_VERSION) do |config|
 
 		node_disk = VOLUME_FOLDER + "node_#{i}_hdd.vdi"
 
-		config.vm.define "node-#{i}" do |node|
+		config.vm.define "node#{i}" do |node|
 			node.vm.box = OS_IMAGE
 			node.vm.hostname = "node#{i}"
 
-			node.vm.network :private_network, ip: "192.168.50.#{i + 10}", netmask: "255.255.255.0"
+			node.vm.network :private_network, ip: "192.168.50.#{i + 10}", netmask: "255.255.255.0", name: "vboxnet0"
 			ssh_port = 2200 + i
 			node.vm.network :forwarded_port, guest: 22, host: ssh_port, id: "ssh", auto_correct: false			
 
@@ -96,10 +99,10 @@ Vagrant.configure(VAGRANTFILE_VERSION) do |config|
 
 	# PVC node
 	(1..NUM_OF_PVC_NODE).each do |i|
-		config.vm.define "node-pvc-#{i}" do |node|
+		config.vm.define "pvc-node#{i}" do |node|
 			node.vm.box = OS_IMAGE
-			node.vm.hostname = "pvc_node#{i}"
-                        node.vm.network :private_network, ip: "192.168.50.#{i + 100}", netmask: "255.255.255.0"
+			node.vm.hostname = "pvc-node#{i}"
+                        node.vm.network :private_network, ip: "192.168.50.#{i + 100}", netmask: "255.255.255.0", name: "vboxnet0"
 			node.vm.network :forwarded_port, guest: 22, host: 2301, id: "ssh", auto_correct: false			
 
                         node.vm.provider :virtualbox do |vb|
@@ -126,7 +129,7 @@ Vagrant.configure(VAGRANTFILE_VERSION) do |config|
                 p1.vm.host_name = "personal1"
 
 		p1.vm.network :public_network
-		p1.vm.network :forwarded_port, guest: 22, host: 2301, id: "ssh", auto_correct: false
+		p1.vm.network :forwarded_port, guest: 22, host: 2401, id: "ssh", auto_correct: false
 
                 p1.vm.provider :virtualbox do |vb|
                         vb.cpus = 4

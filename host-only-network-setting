@@ -1,0 +1,5 @@
+# host only network 생성(이름 지정 불가, 최초 생성 시 vboxnet0)
+vboxmanage hostonlyif create
+
+# vboxnet0으로 생성될 경우 ip 지정(subnet은 기본 255.255.255.0)
+vboxmanage hostonlyif ipconfig vboxnet0 --ip 192.168.50.1

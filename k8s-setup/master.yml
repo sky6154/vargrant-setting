@@ -15,9 +15,9 @@
                   dest: /home/ko/.kube/config
                   flat: yes
 
-        - name: Install calico pod network
-          become: false
-          local_action: ansible.builtin.command kubectl apply -f calico.yaml
+#        - name: Install calico pod network
+#          become: false
+#          local_action: ansible.builtin.command kubectl apply -f calico.yaml
 
         - name: Generate cluster join command
           command: sudo kubeadm token create --print-join-command
