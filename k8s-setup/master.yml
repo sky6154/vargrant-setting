@@ -7,7 +7,7 @@
           include_tasks: preset.yml
 
         - name: Initialize kubernetes cluster
-          command: sudo kubeadm init --apiserver-advertise-address=192.168.50.10 --apiserver-cert-extra-sans=192.168.50.10  --node-name master --pod-network-cidr=192.168.50.0/24
+          command: sudo kubeadm init --apiserver-advertise-address=192.168.50.10 --apiserver-cert-extra-sans=192.168.50.10  --node-name master --pod-network-cidr=192.168.0.0/16
 
         - name: Copy admin.conf to local
           fetch:
@@ -15,9 +15,9 @@
                   dest: /home/ko/.kube/config
                   flat: yes
 
-#        - name: Install calico pod network
-#          become: false
-#          local_action: ansible.builtin.command kubectl apply -f calico.yaml
+        - name: Install calico pod network
+          become: false
+          local_action: ansible.builtin.command kubectl apply -f calico.yaml
 
         - name: Generate cluster join command
           command: sudo kubeadm token create --print-join-command

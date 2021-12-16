@@ -31,7 +31,7 @@ Vagrant.configure(VAGRANTFILE_VERSION) do |config|
 		master.vm.box = OS_IMAGE
 		master.vm.host_name = "master"
 
-		master.vm.network :private_network, ip: "192.168.50.10", netmask: "255.255.255.0", name: "vboxnet0"
+		master.vm.network :private_network, ip: "192.168.50.10", name: "vboxnet0"
 		master.vm.network :forwarded_port, guest: 22, host: 2200, id: "ssh", auto_correct: false
 
 		master.vm.provider :virtualbox do |vb|
@@ -43,6 +43,7 @@ Vagrant.configure(VAGRANTFILE_VERSION) do |config|
 				vb.customize ['createmedium', '--filename', MASTER_DISK, '--size', 10 * 1024, '--variant', 'Standard'] # 10G
 			end
 			vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', MASTER_DISK]
+			vb.customize ['modifyvm', :id, '--natnet1', "10.0.3/24"]
 		end
 
 		master.vbguest.installer_options = { allow_kernel_upgrade: true }
@@ -67,7 +68,7 @@ Vagrant.configure(VAGRANTFILE_VERSION) do |config|
 			node.vm.box = OS_IMAGE
 			node.vm.hostname = "node#{i}"
 
-			node.vm.network :private_network, ip: "192.168.50.#{i + 10}", netmask: "255.255.255.0", name: "vboxnet0"
+			node.vm.network :private_network, ip: "192.168.50.#{i + 10}", name: "vboxnet0"
 			ssh_port = 2200 + i
 			node.vm.network :forwarded_port, guest: 22, host: ssh_port, id: "ssh", auto_correct: false			
 
@@ -81,7 +82,8 @@ Vagrant.configure(VAGRANTFILE_VERSION) do |config|
                         	end
 
                         	vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', node_disk]
-                	end
+				vb.customize ['modifyvm', :id, '--natnet1', "10.0.#{i + 10}/24"]
+			end
 
 			node.vbguest.installer_options = { allow_kernel_upgrade: true }
 
@@ -102,13 +104,17 @@ Vagrant.configure(VAGRANTFILE_VERSION) do |config|
 		config.vm.define "pvc-node#{i}" do |node|
 			node.vm.box = OS_IMAGE
 			node.vm.hostname = "pvc-node#{i}"
-                        node.vm.network :private_network, ip: "192.168.50.#{i + 100}", netmask: "255.255.255.0", name: "vboxnet0"
-			node.vm.network :forwarded_port, guest: 22, host: 2301, id: "ssh", auto_correct: false			
+
+                        node.vm.network :private_network, ip: "192.168.50.#{i + 100}", name: "vboxnet0"
+			ssh_port = 2300 + i
+			node.vm.network :forwarded_port, guest: 22, host: ssh_port, id: "ssh", auto_correct: false			
 
                         node.vm.provider :virtualbox do |vb|
                                 vb.cpus = 2
                                 vb.memory = 4096
                                 vb.gui = false
+				
+				vb.customize ['modifyvm', :id, '--natnet1', "10.0.#{i + 100}/24"]
                         end
 
 			node.vm.synced_folder "/apple_hdd/synced", "/synced"
